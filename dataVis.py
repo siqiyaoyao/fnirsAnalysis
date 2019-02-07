@@ -3,6 +3,7 @@ from pandas import DataFrame
 from pandas import TimeGrouper
 import pandas as pd
 from matplotlib import pyplot
+import os
 
 
 import csv
@@ -13,9 +14,9 @@ class seriesData():
         self.unixTime = None
         self.groups = []
 
-def readDataFromcsv():
+def readDataFromcsv(fileName):
     # reader = pd.read_csv('sdataTest.csv',header=None)
-    reader = pd.read_csv('./data/finaldata/P2.csv',header=None)
+    reader = pd.read_csv(r'/Users/siqiyaoyao/git/python3/fnirs/fnirsAnalysis/dataset/finaldata/'+fileName,header=None)
     
     seriesGroups = seriesData()
     seriesGroups.label =reader[0]
@@ -137,20 +138,28 @@ def plotKde(labels):
     labels[19].plot(kind='kde')
     pyplot.show()
 
+def readWholeJsons():
+    Folder_Path = r'/Users/siqiyaoyao/git/python3/fnirs/fnirsAnalysis/data/jsondata/'          #要拼接的文件夹及其完整路径，注意不要包含中文
+    
+    #修改当前工作目录
+    os.chdir(Folder_Path)
+    #将该文件夹下的所有文件名存入一个列表
+    file_list = os.listdir()
+    print('doc list:', file_list)
 
 def main():
-    DataSet_series,wholeSet = readDataFromcsv()
-    print(wholeSet.head())
-    indexArr = findGroupIndex(DataSet_series.label)
-    labelGroups = groupData(indexArr,wholeSet)
-    #print('debug group data:',labelGroups[7])
-    #plotKde(labelGroups[7])
-    hist(labelGroups[3])
-    #baiscStaticValue(labelGroups[7])
+    DataSet_series,wholeSet = readDataFromcsv('p14.cvs')
+    # print(wholeSet.head())
+    # indexArr = findGroupIndex(DataSet_series.label)
+    # labelGroups = groupData(indexArr,wholeSet)
+    # #print('debug group data:',labelGroups[7])
+    # #plotKde(labelGroups[7])
+    # #hist(labelGroups[3])
+    # baiscStaticValue(labelGroups[6])
     #plotPerLabelsKde(labelGroups[2:19])
+    # readWholeJsons()
 
-
-    #plotAllLabels(DataSet_series.groups)
+    plotAllLabels(DataSet_series.groups)
     #plotTotalSum(DataSet_series.groups)
     # DataSet_series.groups[0].plot()
     # pyplot.show()

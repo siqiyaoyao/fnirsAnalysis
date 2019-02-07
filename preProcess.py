@@ -1,6 +1,7 @@
 import json
 import time, datetime
 import csv
+import os
 ##################################################
 # data class to hold csv data
 ##################################################
@@ -149,6 +150,25 @@ def calculatePatternTime(start,end,jsonData,group):
     #print('debug json info',patternTime.start,patternTime.end,patternTime.label)
     return patternTime
     
+def calculatePerQuestionTime(jsonData):
+    timeArr =[]
+    for i in range(0,153):
+        startTime = jsonData['data'][i]['startTime']
+        endTime = jsonData['data'][i]['endTime']
+        startTimeUnix = jsonToUnix(startTime)
+        endTimeUnix = jsonToUnix(endTime)
+
+        perTime = patternGroup()
+        perTime.start = startTimeUnix
+        perTime.end = endTimeUnix
+        perTime.label = i
+
+        timeArr.append(perTime)
+
+    return timeArr
+        
+
+
 
 def getPatternGroupTime(jsonData):
     groupArr =[]
@@ -164,6 +184,18 @@ def getPatternGroupTime(jsonData):
     print('debug gropArr info',groupArr[0].start,groupArr[0].end,groupArr[0].label)
     return groupArr
 
+def getWholeKeyDownTime(jsonData):
+    startArr = []
+    endArr = []
+    wholeData = jsonData['data']
+    for data in wholeData:
+        start = data['startTime']
+        end = data['endTime']
+        startArr.append(start)
+        endArr.append(end)
+        #print('debug keydown data ',curData)
+    return startArr,endArr
+
 def getKeyDownTime(jsonData):
     arr = []
     wholeData = jsonData['data']
@@ -172,8 +204,6 @@ def getKeyDownTime(jsonData):
         arr.append(curData)
         #print('debug keydown data ',curData)
     return arr
-
-
 
 
 ##################################################
@@ -261,20 +291,23 @@ def transferRawToTimeseries(startUnixTime,fdata,patternGroup):
 
     return tsArr
     
+
+    
 ##################################################
 # assign fnirsData to pattern groups
 ##################################################
 def classifyFdata(Pgroup,currentTime):
     for group in Pgroup: # could be improved
         if(currentTime <= float(group.end) and currentTime >= float(group.start)):
-            print('debug classfy method ',currentTime,group.label)
+            #print('debug classfy method ',currentTime,group.label)
             return True,group.label    
     return False ,group.label    
 
+  
 
 
 def writeCVS(data):
-    out = open('P3.csv','a', newline='')
+    out = open('P14.csv','a', newline='')
     csv_write = csv.writer(out,dialect='excel')
     lenData = len(data.G1)
 
@@ -315,23 +348,51 @@ def writeKewdownData(data):
     csv_write.writerow(data)
     print ("write key over")
 
+def writeKeyDownTimes(start,end,filename):
+    f = filename+'.csv'
+    out = open(f,'a', newline='')
+    csv_write = csv.writer(out,dialect='excel')
+    csv_write.writerow(start)
+    csv_write.writerow(end)
+    print ("write key over")
 
+
+def readWholeJsons():
+    Folder_Path = r'/Users/siqiyaoyao/git/python3/fnirs/fnirsAnalysis/dataset/jsondata/'          #要拼接的文件夹及其完整路径，注意不要包含中文
+    
+    #修改当前工作目录
+    os.chdir(Folder_Path)
+    #将该文件夹下的所有文件名存入一个列表
+    file_list = os.listdir()
+    print('doc list:', file_list)
+
+    return file_list
 
 def main():
     fdata = fnirData() 
-    fdata = read_data(data,'./data/P3_NIRS-2018-11-28_002_oxyhb_T1to9961_C1to18.txt',fdata)
-    jsonData,patternGroup = read_jsonData('./jsondata/1204_sam_8.json')
+    fdata = read_data(data,'./dataset/data/P14_NIRS-2018-12-13_008_oxyhb_T1to10764_C1to18.txt',fdata)
+    jsonData,patternGroup = read_jsonData('./dataset/jsondata/1213_qiyu_14.json')
     startTime = cleanTimeData(jsonData['data'][0]['startTime'])
     startTime = timeStandards(startTime)
 
+
+
+
     # wriring final dataste to cvs 
-    # processedFdata = transferRawToTimeseries(startTime,fdata,patternGroup)
+    processedFdata = transferRawToTimeseries(startTime,fdata,patternGroup)
     # print("debug final dataset", len(processedFdata.G1),processedFdata.G1[100].label)
-    # writeCVS(processedFdata)
+    writeCVS(processedFdata)
 
     # wrting keydown data
-    keydownData = getKeyDownTime(jsonData)
-    writeKewdownData(keydownData)
+    # fileList = readWholeJsons()
+    # fileList.remove('.DS_Store')
+    # for i in range(0,15):
+    #     filename ='/Users/siqiyaoyao/git/python3/fnirs/fnirsAnalysis/dataset/jsondata/'+fileList[i]
+    #     #print(fileList[i][-7:-5])
+       
+    #     jsonData,p = read_jsonData(filename)
+    #     startTimes,endTimes= getWholeKeyDownTime(jsonData)
+    #     writeKeyDownTimes(startTimes,endTimes,fileList[i][-7:-5])
     
     # debugggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
     # print(processedFdata.G18[17].unixTime,processedFdata.G18[17].value,processedFdata.G18[17].label)
